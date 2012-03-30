@@ -1,6 +1,5 @@
 #Sheets
-a python object for seamless spreadsheet reading
-
+a python object for seamless spreadsheet reading across formats
 
 ##Goals
 Allow a python application to open and read data from a spreadsheet file without the need for specific file type coding. Users should be able to work with data from .csv, Excel .xls or .xlsx without needing to specifically create or invoke the logic from file specific libraries. Contributions welcome.
@@ -12,7 +11,7 @@ Spreadsheet files are identified based on their extension and the appropriate mo
 * xlrd is used for .xls files
 * openpyxl is used for .xlsx files
 
-The sheets object looks like...
+The sheets object that is created looks like this...
 
     +-------------------------------------------------------+
     |Workbook = list                                        |
@@ -42,10 +41,11 @@ The sheets object looks like...
 
 
 ##Examples
-See sheet_test.py for examples.
+See sheet_test.py for some (very basic) working examples.
 
 ##Future Plans
 *See issues
 
 ##Author
 Dan Fehrenbach
+dnfehrenbach@gmail.com

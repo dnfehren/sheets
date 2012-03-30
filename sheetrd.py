@@ -6,6 +6,14 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 '''
+Wrapper class for reading common spreadsheet types. 
+CSV, XLS and XLSX are supported currently
+
+Dan Fehrenbach
+dnfehrenbach@gmail.com
+
+dependencies are collections (for named tuples), csv, xlrd and openpyxl
+
 why use tuple for rows?
 http://stackoverflow.com/questions/626759/whats-the-difference-between-list-and-tuples-in-python
 
@@ -17,6 +25,11 @@ workbooks are lists containing worksheets
 '''
 
 '''
+check a row from a spreadsheet and create a list suitable for use as
+the elements of a named tuple
+
+replaces blanks with 'col' + index of blank in row list
+
 TODO
 This will need to be expanded to deal with headings
 that start with numbers or contain problematic chars
@@ -35,6 +48,12 @@ def make_header(potential_header_row):
     return clean_header
 
 
+'''
+take a row from the openpyxl iterator and return just the values
+
+this (likely) depends on the row being generated from the iter_rows()
+method that comes with using an openpyxl reader with use_iterators=True
+'''
 def xlsx_row_values(openpyxl_row):
 
     values_only_row = []
@@ -130,7 +149,7 @@ class SheetReader(object):
             workbook.append(sheet)
             
             self.sheets = workbook
-            
+
 
         elif file_ext == '.xls':
             
