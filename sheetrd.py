@@ -1,6 +1,6 @@
-import os
-import csv, xlrd, openpyxl
-import collections
+#!/usr/bin/env python
+
+import os, collections
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -15,6 +15,37 @@ rows are tuples (sometimes named tuples)
 worksheets are named tuples containing a name and data (data is a list of tuples)
 workbooks are lists containing worksheets
 '''
+
+'''
+TODO
+This will need to be expanded to deal with headings
+that start with numbers or contain problematic chars
+like $ or %.
+'''
+def make_header(potential_header_row):
+
+    clean_header = []
+
+    for p_head_num, p_head_cell in enumerate(potential_header_row):
+        if p_head_cell == '':
+            clean_header.append('col' + str(p_head_num))
+        else:
+            clean_header.append(p_head_cell)
+
+    return clean_header
+
+
+def xlsx_row_values(openpyxl_row):
+
+    values_only_row = []
+
+    for cell in openpyxl_row:
+        values_only_row.append(cell.internal_value)
+
+    return values_only_row
+
+
+
 
 class SheetReader(object):
 
@@ -35,9 +66,14 @@ class SheetReader(object):
         http://docs.python.org/library/collections.html#collections.namedtuple
         '''
         Worksheet = collections.namedtuple('Worksheet', 
-                                           ['sheet_name','sheet_data'])
+                                            ['sheet_name','sheet_data'])
 
+        '''
+        CSV Handling
+        '''
         if file_ext == '.csv':
+
+            import csv
 
             csv_reader = csv.reader(file_handle)
 
@@ -57,25 +93,13 @@ class SheetReader(object):
                 if header_row is not 0: #args default to 0
                     if row_num == header_row - 1: #enumerate starts at 0
 
-                        header = []
-
                         '''
                         Sometimes csv's end up with left over columns.
                         Instead of deleteing them here, if there are
                         columns in the header row with no string name
                         they are given a generic name 'col' + index in the list
-
-                        TODO
-                        This will need to be expanded to deal with headings
-                        that start with numbers or contain problematic chars
-                        like $ or %.
                         '''
-
-                        for p_header_num, p_header_cell in enumerate(row):
-                            if p_header_cell == '':
-                                header.append('col' + str(p_header_num))
-                            else:
-                                header.append(p_header_cell)
+                        header = make_header(row)
                         
                         #create the named tuple object
                         Drow = collections.namedtuple('Row',header)
@@ -106,8 +130,12 @@ class SheetReader(object):
             workbook.append(sheet)
             
             self.sheets = workbook
-        
+            
+
         elif file_ext == '.xls':
+            
+            import xlrd
+
             xl_reader = xlrd.open_workbook(file_location)
             
             xl_sheet_names = xl_reader.sheet_names()
@@ -117,12 +145,29 @@ class SheetReader(object):
             for xl_sheet_name in xl_sheet_names:
 
                 working_sheet = []
+                Drow = None
                 
                 xl_sheet = xl_reader.sheet_by_name(xl_sheet_name)
 
-                for xl_row in range(xl_sheet.nrows):
-
-                    working_sheet.append(xl_sheet.row_values(xl_row))
+                '''
+                to get xlrd row values you need an index number,
+                AFAIK there isnt a way to iterate by row w/o and index
+                '''
+                for xl_row_num in range(xl_sheet.nrows):
+                    
+                    if header_row is not 0:
+                    
+                        if xl_row_num == header_row - 1:          
+                            p_head_row = xl_sheet.row_values(xl_row_num)
+                            header = make_header(p_head_row)
+                            Drow = collections.namedtuple('Row',header)
+                        else:
+                            xl_row = xl_sheet.row_values(xl_row_num)
+                            named_row = Drow._make(xl_row)
+                            working_sheet.append(named_row)
+                    else:
+                        xl_row = xl_sheet.row_values(xl_row_num)
+                        working_sheet.append(tuple(xl_row))
 
                 sheet = Worksheet(sheet_name = xl_sheet_name, 
                                     sheet_data = working_sheet)
@@ -130,31 +175,49 @@ class SheetReader(object):
                 workbook.append(sheet)
 
             self.sheets = workbook
-        
+
+
         elif file_ext == '.xlsx':
-            xlx_reader = openpyxl.load_workbook(filename = file_location, 
+
+            import openpyxl
+
+            xlsx_reader = openpyxl.load_workbook(filename = file_location, 
                                                 use_iterators=True)
 
-            xlx_sheet_names = xlx_reader.get_sheet_names()
+            xlsx_sheet_names = xlsx_reader.get_sheet_names()
 
             workbook = []
 
-            for xlx_sheet_name in xlx_sheet_names:
+            for xlsx_sheet_name in xlsx_sheet_names:
 
                 working_sheet = []
+                Drow = None
 
-                xlx_sheet = xlx_reader.get_sheet_by_name(xlx_sheet_name)
+                xlsx_sheet = xlsx_reader.get_sheet_by_name(xlsx_sheet_name)
 
-                for xlx_row in xlx_sheet.iter_rows():
+                '''
+                openpyxl doesnt have a row values function, cells need to have
+                their values extracted individually, using sheet.iter_rows() 
+                should make things as fast as possible
+                REF: http://packages.python.org/openpyxl/optimized.html
+                '''
+                for xlsx_row_num, xlsx_row in enumerate(xlsx_sheet.iter_rows()):
 
-                    row_values = []
+                    if header_row is not 0:
 
-                    for cell in xlx_row:
-                        row_values.append(cell.internal_value)
+                        if xlsx_row_num == header_row - 1:
+                            p_head_row = xlsx_row_values(xlsx_row)
+                            header = make_header(p_head_row)
+                            Drow = collections.namedtuple('Row',header)
+                        else:
+                            xlsx_row = xlsx_row_values(xlsx_row)
+                            named_row = Drow._make(xlsx_row)
+                            working_sheet.append(named_row)
+                    else:
+                        xlsx_row = xlsx_row_values(xlsx_row)
+                        working_sheet.append(tuple(xlsx_row))
 
-                    working_sheet.append(row_values)
-
-                sheet = Worksheet(sheet_name = xlx_sheet_name, 
+                sheet = Worksheet(sheet_name = xlsx_sheet_name, 
                                     sheet_data = working_sheet)
 
                 workbook.append(sheet)
