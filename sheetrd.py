@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import os, collections
+import os, collections, itertools
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+
+#Intro
 
 '''
 Wrapper class for reading common spreadsheet types. 
@@ -23,6 +25,8 @@ rows are tuples (sometimes named tuples)
 worksheets are named tuples containing a name and data (data is a list of tuples)
 workbooks are lists containing worksheets
 '''
+
+#Work
 
 '''
 check a row from a spreadsheet and create a list suitable for use as
@@ -247,15 +251,22 @@ class SheetReader(object):
             print "unsupported file type. Only .csv, .xls and .xlsx"
 
 
+    #returns the names of all sheets in a book
     def book_names(self):
         for sheet in self.sheets:
             yield sheet.sheet_name
 
+    #returns a row iterator for the specified sheet
     def sheet_rows(self, sheet_name):
         for sheet in self.sheets:
             if sheet.sheet_name == sheet_name:
                 for row in sheet.sheet_data:
                     yield row
 
-    def col(self, sheet, col_choice):
-        pass
+    #returns a column iterator for the specified sheet
+    #this is based on code in the python docs but I don't get what the * does
+    def sheet_cols(self, sheet_name):
+        for sheet in self.sheets:
+            if sheet.sheet_name == sheet_name:
+                for col in itertools.izip_longest(*sheet.sheet_data):
+                    yield col

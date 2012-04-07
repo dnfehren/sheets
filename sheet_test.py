@@ -18,5 +18,8 @@ xlsx_wb = sheetrd.SheetReader('test_data/xlsx_testing.xlsx',1)
 #for row in xls_wb.sheet_rows('testing'):
 #	print row
 
-for row in xlsx_wb.sheet_rows('testing'):
-    print row
+#for row in xlsx_wb.sheet_rows('testing'):
+#    print row
+
+for col in xlsx_wb.sheet_cols('testing'):
+    print col
