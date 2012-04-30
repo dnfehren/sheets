@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, collections, itertools
+import os, collections, itertools, re
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -27,19 +27,16 @@ workbooks are lists containing worksheets
 '''
 
 #Work
+#Functions
 
+def make_header(potential_header_row):
 '''
 check a row from a spreadsheet and create a list suitable for use as
 the elements of a named tuple
-
-replaces blanks with 'col' + index of blank in row list
-
-TODO
-This will need to be expanded to deal with headings
-that start with numbers or contain problematic chars
-like $ or %.
 '''
-def make_header(potential_header_row):
+    rx_cleaner = re.compile("['(',')','$','-']")
+    rx_space = re.compile("\s+")
+    rx_first_digit = re.compile("^\d")
 
     clean_header = []
 
@@ -47,9 +44,28 @@ def make_header(potential_header_row):
         if p_head_cell == '':
             clean_header.append('col' + str(p_head_num))
         else:
-            clean_header.append(p_head_cell)
 
-    return clean_header
+            #remove special characters
+            clean_head_cell = rx_cleaner.sub('',p_head_cell).strip()
+            
+            #replace spaces with '_'
+            spaced_head_cell = rx_space.sub('_',clean_head_cell).strip()
+
+            final_head_cell = ''
+
+            #if the header starts with a number, append a 'd_'
+            # named tuple fields cannot start with a number or '-'
+            # but if you use an ordereddict, this might not be necessary
+            if rx_first_digit.match(spaced_head_cell):
+                final_head_cell = 'd_' + spaced_head_cell
+            else:
+                final_head_cell = spaced_head_cell
+
+            clean_header.append(final_head_cell)
+
+        return clean_header
+
+
 
 
 '''
@@ -253,8 +269,8 @@ class SheetReader(object):
 
     #returns the names of all sheets in a book
     def book_names(self):
-        for sheet in self.sheets:
-            yield sheet.sheet_name
+        b_names = [x.sheet_name for x in self.sheets]
+        return b_names
 
     #returns a row iterator for the specified sheet
     def sheet_rows(self, sheet_name):
@@ -270,3 +286,29 @@ class SheetReader(object):
             if sheet.sheet_name == sheet_name:
                 for col in itertools.izip_longest(*sheet.sheet_data):
                     yield col
+    
+    '''
+    #http://code.activestate.com/recipes/192401-quickly-remove-or-order-columns-in-a-list-of-lists/
+    #http://stackoverflow.com/questions/1983902/remove-row-or-column-from-2d-list-if-all-values-in-that-row-or-column-are-none
+    def del_col(self, sheet_name, col_num_list):
+        for sheet in self.sheets:
+            if sheet.sheet_name == sheet_name:
+                pass
+                #go through each row and delete something at specific index
+
+                #delete a whole column
+    '''
+
+    def convert_to_databook(self):
+        
+        try:
+            import tablib
+        except ImportError:
+            print "problems importing tablib, install it please"
+
+        tblb_databook = tablib.Databook()
+
+        for sheet in self.sheets:
+            pass
+            #tblb_dataset = tablib.Dataset(self.sheet_data)
+            #tblb_databook

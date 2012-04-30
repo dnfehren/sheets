@@ -21,5 +21,12 @@ xlsx_wb = sheetrd.SheetReader('test_data/xlsx_testing.xlsx',1)
 #for row in xlsx_wb.sheet_rows('testing'):
 #    print row
 
-for col in xlsx_wb.sheet_cols('testing'):
-    print col
+#for col in xlsx_wb.sheet_cols('testing'):
+#    print col
+
+pp.pprint(csv_wb.book_names())
+pp.pprint(xls_wb.book_names())
+pp.pprint(xlsx_wb.book_names())
+
+try:
+	
