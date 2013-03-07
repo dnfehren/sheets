@@ -30,10 +30,10 @@ workbooks are lists containing worksheets
 #Functions
 
 def make_header(potential_header_row):
-'''
-check a row from a spreadsheet and create a list suitable for use as
-the elements of a named tuple
-'''
+    '''
+    check a row from a spreadsheet and create a list suitable for use as
+    the elements of a named tuple
+    '''
     rx_cleaner = re.compile("['(',')','$','-']")
     rx_space = re.compile("\s+")
     rx_first_digit = re.compile("^\d")
